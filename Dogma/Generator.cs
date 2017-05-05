@@ -105,8 +105,16 @@ namespace Dogma
             List<Type> discovered = new List<Type>();
             string nl = Environment.NewLine;
             string tab = "\t";
+            string extends = string.Empty;
+
+            if (info.BaseType != null && info.BaseType != typeof(System.Object))
+            {
+                // This object extends another class or interface
+                discovered.Add(info.BaseType);
+                extends = $"extends {info.BaseType.Name} ";
+            }
             
-            sb.AppendLine(tab + $"export interface {info.Name} {{");
+            sb.AppendLine(tab + $"export interface {info.Name} {extends}{{");
 
             foreach (var prop in info.DeclaredProperties)
             {
