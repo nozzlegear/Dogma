@@ -8,6 +8,7 @@ There are a bunch of other C# to TypeScript tools out there, like [Reinforced.Ty
 - a. Transforming the classes and interfaces to *just* TypeScript interfaces.
 - b. Add an `export` statement on those TypeScript interfaces.
 - c. Export those interfaces **from a declared module**. 
+- d. Serialze enums to TypeScript's string literal type, e.g. `"EnumValue1" | "EnumValue2"`.
 
 Almost every tool I've used would either turn my C# pocos to a class with a ton of extra cruft and methods added, wouldn't export the interfaces, or wouldn't declare a module. 
 
@@ -76,8 +77,8 @@ Make sure you replace the `Dogma.Tests` string with the name of your assembly. I
 
 ## Roadmap
 
-- [] Allow overriding a property type with a custom attribute. 
-- [] Allow overriding a property type with a custom attribute that can specify a module to import the type from.
+- [ ] Allow overriding a property type with a custom attribute. 
+- [ ] Allow overriding a property type with a custom attribute that can specify a module to import the type from.
 - [x] Handle enums.
-- [] If a discovered type has it's own module attribute, move it out of the current module and import it instead.
-- [] Use `[JsonProperty]` attribute to determine the name of a property.
+- [ ] If a discovered type has it's own module attribute, move it out of the current module and import it instead.
+- [ ] Use `[JsonProperty]` attribute to determine the name of a property.
