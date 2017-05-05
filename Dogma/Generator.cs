@@ -21,7 +21,7 @@ namespace Dogma
             
             // While DiscoveredClasses has classes that aren't in the finishedClasses list,
             // keep looping through and build interfaces. 
-            List<(Type Type, string ModuleName)> discovered = new List<(Type Type, string ModuleName)>();
+            List<(Type Type, string ModuleName, bool NullableProps)> discovered = new List<(Type Type, string ModuleName, bool NullableProps)>();
 
             while (true)
             {
@@ -29,9 +29,9 @@ namespace Dogma
                 {
                     foreach (var data in assemblyTypes)
                     {
-                        var generated = BuildInterfaceCode(data.Type);
+                        var generated = BuildInterfaceCode(data.Type, data.NullableProps);
 
-                        discovered.AddRange(generated.DiscoveredClasses.Select(disc => (disc, data.ModuleName)));
+                        discovered.AddRange(generated.DiscoveredClasses.Select(disc => (disc, data.ModuleName, data.NullableProps)));
                         interfaces.Add(new GeneratedInterface(data.ModuleName, generated.Code, data.Type));
                     }
 
@@ -44,13 +44,13 @@ namespace Dogma
                         .GroupBy(t => t.Type.FullName)
                         .Select(t => t.First())
                         .Where(t => ! interfaces.Any(generated => generated.FromObject == t.Type));
-                    discovered = new List<(Type type, string ModuleName)>();
+                    discovered = new List<(Type type, string ModuleName, bool NullableProps)>();
 
                     foreach (var discovery in unique)
                     {
-                        var generated = BuildInterfaceCode(discovery.Type);
+                        var generated = BuildInterfaceCode(discovery.Type, discovery.NullableProps);
 
-                        discovered.AddRange(generated.DiscoveredClasses.Select(t => (t, discovery.ModuleName)));
+                        discovered.AddRange(generated.DiscoveredClasses.Select(t => (t, discovery.ModuleName, discovery.NullableProps)));
                         interfaces.Add(new GeneratedInterface(discovery.ModuleName, generated.Code, discovery.Type));
                     }
                 }
@@ -79,7 +79,7 @@ namespace Dogma
                 });
         }
 
-        private IEnumerable<(Type Type, string ModuleName)> GetTypesWithAttribute(Assembly assembly)
+        private IEnumerable<(Type Type, string ModuleName, bool NullableProps)> GetTypesWithAttribute(Assembly assembly)
         {
             foreach (TypeInfo info in assembly.DefinedTypes)
             {
@@ -87,18 +87,12 @@ namespace Dogma
 
                 if (attribute != null)
                 {
-                    var data = new TypeData()
-                    {
-                        TypeInfo = info,
-                        Attribute = attribute
-                    };
-
-                    yield return (info.AsType(), attribute.ModuleName);
+                    yield return (info.AsType(), attribute.ModuleName, attribute.MakePropertiesNullable);
                 }
             }
         }
 
-        private (string Code, List<Type> DiscoveredClasses) BuildInterfaceCode(Type type)
+        private (string Code, List<Type> DiscoveredClasses) BuildInterfaceCode(Type type, bool nullableProperties)
         {
             TypeInfo info = type.GetTypeInfo();
             StringBuilder sb = new StringBuilder();
@@ -119,8 +113,9 @@ namespace Dogma
             foreach (var prop in info.DeclaredProperties)
             {
                 var tsType = GetTSType(prop.PropertyType);
+                string nullable = nullableProperties ? "?" : string.Empty;
 
-                sb.AppendLine(tab + tab + $"{prop.Name}?: {tsType.TSTypeName};");
+                sb.AppendLine(tab + tab + $"{prop.Name}{nullable}: {tsType.TSTypeName};");
 
                 if (tsType.DiscoveredClass != null)
                 {

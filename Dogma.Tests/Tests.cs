@@ -30,7 +30,7 @@ namespace Dogma.Tests
         }
     }
 
-    [ToTypeScriptAttribute("test-module")]
+    [ToTypeScript("test-module", true)]
     public class TestClass : InterfaceBoy
     {
         public string Foo { get; set; }

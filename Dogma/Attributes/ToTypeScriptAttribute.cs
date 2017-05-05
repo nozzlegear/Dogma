@@ -5,9 +5,12 @@ namespace Dogma.Attributes
     {
         public string ModuleName { get; }
 
-        public ToTypeScriptAttribute(string moduleName)
+        public bool MakePropertiesNullable { get; }
+
+        public ToTypeScriptAttribute(string moduleName, bool makePropertiesNullable = false)
         {
             ModuleName = moduleName;
+            MakePropertiesNullable = makePropertiesNullable;
         }
     }
 }
