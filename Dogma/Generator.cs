@@ -29,10 +29,10 @@ namespace Dogma
                 {
                     foreach (var data in assemblyTypes)
                     {
-                        var generated = GenerateInterface(data.Type, data.ModuleName);
+                        var generated = BuildInterfaceCode(data.Type);
 
                         discovered.AddRange(generated.DiscoveredClasses.Select(disc => (disc, data.ModuleName)));
-                        interfaces.Add(generated.Interface);
+                        interfaces.Add(new GeneratedInterface(data.ModuleName, generated.Code, data.Type));
                     }
 
                     firstRun = false;
@@ -48,10 +48,10 @@ namespace Dogma
 
                     foreach (var discovery in unique)
                     {
-                        var generated = GenerateInterface(discovery.Type, discovery.ModuleName);
+                        var generated = BuildInterfaceCode(discovery.Type);
 
                         discovered.AddRange(generated.DiscoveredClasses.Select(t => (t, discovery.ModuleName)));
-                        interfaces.Add(generated.Interface);
+                        interfaces.Add(new GeneratedInterface(discovery.ModuleName, generated.Code, discovery.Type));
                     }
                 }
 
@@ -79,7 +79,26 @@ namespace Dogma
                 });
         }
 
-        private (GeneratedInterface Interface, List<Type> DiscoveredClasses) GenerateInterface(Type type, string moduleName)
+        private IEnumerable<(Type Type, string ModuleName)> GetTypesWithAttribute(Assembly assembly)
+        {
+            foreach (TypeInfo info in assembly.DefinedTypes)
+            {
+                var attribute = info.GetCustomAttribute(typeof(ToTypeScriptAttribute), true) as ToTypeScriptAttribute;
+
+                if (attribute != null)
+                {
+                    var data = new TypeData()
+                    {
+                        TypeInfo = info,
+                        Attribute = attribute
+                    };
+
+                    yield return (info.AsType(), attribute.ModuleName);
+                }
+            }
+        }
+
+        private (string Code, List<Type> DiscoveredClasses) BuildInterfaceCode(Type type)
         {
             TypeInfo info = type.GetTypeInfo();
             StringBuilder sb = new StringBuilder();
@@ -105,26 +124,7 @@ namespace Dogma
 
             string code = sb.ToString();
 
-            return (new GeneratedInterface(moduleName, code, type), discovered);
-        }
-
-        private IEnumerable<(Type Type, string ModuleName)> GetTypesWithAttribute(Assembly assembly)
-        {
-            foreach (TypeInfo info in assembly.DefinedTypes)
-            {
-                var attribute = info.GetCustomAttribute(typeof(ToTypeScriptAttribute), true) as ToTypeScriptAttribute;
-
-                if (attribute != null)
-                {
-                    var data = new TypeData()
-                    {
-                        TypeInfo = info,
-                        Attribute = attribute
-                    };
-
-                    yield return (info.AsType(), attribute.ModuleName);
-                }
-            }
+            return (code, discovered);
         }
 
         private (string TSTypeName, Type DiscoveredClass) GetTSType(Type type)
