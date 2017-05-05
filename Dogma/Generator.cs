@@ -11,48 +11,33 @@ namespace Dogma
 {
     public static class Generator
     {
-        public static IEnumerable<GeneratedFile> GenerateFiles(Assembly assembly)
+        /// <summary>
+        /// Discovers all classes and interfaces in the <paramref name="assembly" /> and converts them to TypeScript module declarations.
+        /// </summary>
+        public static IEnumerable<GeneratedModule> GenerateModules(Assembly assembly)
         {
             // Keep references to all classes that we create. We'll prune duplicates after
             // all classes have been generated and then combine them into single modules.
             List<GeneratedInterface> interfaces = new List<GeneratedInterface>();
-            var assemblyTypes = GetTypesWithAttribute(assembly);
-            bool firstRun = true;
-            
-            // While DiscoveredClasses has classes that aren't in the finishedClasses list,
-            // keep looping through and build interfaces. 
-            List<(Type Type, string ModuleName, bool NullableProps)> discovered = new List<(Type Type, string ModuleName, bool NullableProps)>();
+
+            // Keep looping through and building interfaces while the discovered list has classes that aren't in the finished interfaces list. 
+            List<(Type Type, string ModuleName, bool NullableProps)> discovered = DiscoverTypesWithAttributes(assembly).ToList();
 
             while (true)
             {
-                if (firstRun)
+                // Get unique types that haven't already been generated.
+                var unique = discovered
+                    .GroupBy(t => t.Type.FullName)
+                    .Select(t => t.First())
+                    .Where(t => ! interfaces.Any(generated => generated.FromObject == t.Type));
+                discovered = new List<(Type type, string ModuleName, bool NullableProps)>();
+
+                foreach (var discovery in unique)
                 {
-                    foreach (var data in assemblyTypes)
-                    {
-                        var generated = BuildInterfaceCode(data.Type, data.NullableProps);
+                    var generated = BuildInterfaceCode(discovery.Type, discovery.NullableProps);
 
-                        discovered.AddRange(generated.DiscoveredClasses.Select(disc => (disc, data.ModuleName, data.NullableProps)));
-                        interfaces.Add(new GeneratedInterface(data.ModuleName, generated.Code, data.Type));
-                    }
-
-                    firstRun = false;
-                }
-                else
-                {
-                    // Get unique types that haven't already been generated.
-                    var unique = discovered
-                        .GroupBy(t => t.Type.FullName)
-                        .Select(t => t.First())
-                        .Where(t => ! interfaces.Any(generated => generated.FromObject == t.Type));
-                    discovered = new List<(Type type, string ModuleName, bool NullableProps)>();
-
-                    foreach (var discovery in unique)
-                    {
-                        var generated = BuildInterfaceCode(discovery.Type, discovery.NullableProps);
-
-                        discovered.AddRange(generated.DiscoveredClasses.Select(t => (t, discovery.ModuleName, discovery.NullableProps)));
-                        interfaces.Add(new GeneratedInterface(discovery.ModuleName, generated.Code, discovery.Type));
-                    }
+                    discovered.AddRange(generated.DiscoveredClasses.Select(t => (t, discovery.ModuleName, discovery.NullableProps)));
+                    interfaces.Add(new GeneratedInterface(discovery.ModuleName, generated.Code, discovery.Type));
                 }
 
                 if (discovered == null || discovered.Count() == 0)
@@ -75,11 +60,14 @@ namespace Dogma
                     sb.Append(code);
                     sb.Append("}");
 
-                    return new GeneratedFile(moduleName, sb.ToString());
+                    return new GeneratedModule(moduleName, sb.ToString());
                 });
         }
 
-        private static IEnumerable<(Type Type, string ModuleName, bool NullableProps)> GetTypesWithAttribute(Assembly assembly)
+        /// <summary>
+        /// Discovers all types using the <see cref="ToTypeScriptAttribute" /> in the assembly.
+        /// </summary>
+        private static IEnumerable<(Type Type, string ModuleName, bool NullableProps)> DiscoverTypesWithAttributes(Assembly assembly)
         {
             foreach (TypeInfo info in assembly.DefinedTypes)
             {
@@ -92,6 +80,9 @@ namespace Dogma
             }
         }
 
+        /// <summary>
+        /// Takes a class or interface type and builds a TypeScript interface out of it, while simultaneously discovering interfaces and classes used by the parent.
+        /// </summary>
         private static (string Code, List<Type> DiscoveredClasses) BuildInterfaceCode(Type type, bool nullableProperties)
         {
             TypeInfo info = type.GetTypeInfo();
@@ -148,6 +139,9 @@ namespace Dogma
             return jsonProperty?.PropertyName ?? prop.Name;
         }
 
+        /// <summary>
+        /// Translates a type to a TypeScript type, while also discovering underlying classes or interfaces.
+        /// </summary>
         private static (string TSTypeName, Type DiscoveredClass) GetTSType(Type type)
         {
             if (type.IsArray)
@@ -178,12 +172,14 @@ namespace Dogma
                 return ("number", null);
             }
 
-            if (IsEnum(type))
+            var info = type.GetTypeInfo();
+
+            if (info.IsEnum)
             {
                 return (type.Name, type);
             }
 
-            if (IsEnumerable(type) && type.IsConstructedGenericType)
+            if (type.IsConstructedGenericType && info.ImplementedInterfaces.Contains(typeof(System.Collections.IEnumerable)))
             {
                 var genericType = GetTSType(type.GenericTypeArguments.First());
                 string typeName = genericType.TSTypeName + "[]";
@@ -191,11 +187,12 @@ namespace Dogma
                 return (typeName, genericType.DiscoveredClass);
             }
 
-            if (IsClass(type))
+            if (info.IsClass)
             {
                 return (type.Name, type);
             }
 
+            // Unknown type. This will probably break the definition, but we'll cross our fingers and return it anyway.
             return (type.Name, null);
         }
 
@@ -216,27 +213,6 @@ namespace Dogma
             };
 
             return numberTypes.Contains(type);
-        }
-
-        private static bool IsEnumerable(Type type)
-        {
-            var info = type.GetTypeInfo();
-
-            return info.ImplementedInterfaces.Contains(typeof(System.Collections.IEnumerable));
-        }
-
-        private static bool IsClass(Type type)
-        {
-            var info = type.GetTypeInfo();
-
-            return info.IsClass;
-        }
-
-        private static bool IsEnum(Type type)
-        {
-            var info = type.GetTypeInfo();
-
-            return info.IsEnum;
         }
     }
 }

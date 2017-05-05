@@ -1,8 +1,8 @@
 namespace Dogma.Entities
 {
-    public class GeneratedFile
+    public class GeneratedModule
     {
-        public GeneratedFile(string moduleName, string code)
+        public GeneratedModule(string moduleName, string code)
         {
             ModuleName = moduleName;
             Code = code;

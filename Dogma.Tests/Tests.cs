@@ -21,7 +21,7 @@ namespace Dogma.Tests
                 .Where(a => a.Name == "Dogma.Tests")
                 .First();
             var assembly = Assembly.Load(assemblyName);
-            var files = Dogma.Generator.GenerateFiles(assembly);
+            var files = Dogma.Generator.GenerateModules(assembly);
 
             foreach (var file in files)
             {

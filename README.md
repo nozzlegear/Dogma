@@ -39,11 +39,11 @@ Once you've got your pocos ready to convert, pass in the `Assembly` you want to 
 
 ```cs
 Assembly assembly = MethodToGetMyAssembly();
-var moduleFiles = Dogma.Generator.GenerateFiles(assembly);
+var modules = Dogma.Generator.GenerateModules(assembly);
 
-foreach (var file in moduleFiles)
+foreach (var module in modules)
 {
-    System.IO.Files.WriteAllText($"path/to/{file.moduleName}.generated.d.ts", file.Code);
+    System.IO.Files.WriteAllText($"path/to/{module.ModuleName}.generated.d.ts", file.Code);
 }
 ```
 
