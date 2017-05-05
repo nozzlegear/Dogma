@@ -13,7 +13,7 @@ namespace Dogma.Tests
     public class Tests
     {
         [Fact]
-        public async Task Generates_Interfaces()
+        public void Generates_Interfaces()
         {
             var assemblyName = DependencyContext.Default
                 .GetDefaultAssemblyNames()
@@ -21,7 +21,7 @@ namespace Dogma.Tests
                 .First();
             var assembly = Assembly.Load(assemblyName);
             var generator = new Generator();
-            var files = await generator.GenerateFiles(assembly);
+            var files = generator.GenerateFiles(assembly);
 
             foreach (var file in files)
             {

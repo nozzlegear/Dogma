@@ -11,7 +11,7 @@ namespace Dogma
 {
     public class Generator
     {
-        public async Task<IEnumerable<GeneratedFile>> GenerateFiles(Assembly assembly)
+        public IEnumerable<GeneratedFile> GenerateFiles(Assembly assembly)
         {
             // Keep references to all classes that we create. We'll prune duplicates after
             // all classes have been generated and then combine them into single modules.
