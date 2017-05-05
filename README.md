@@ -5,9 +5,9 @@ Dogma is a simple C# => TypeScript module interface declaration generator. Synch
 
 There are a bunch of other C# to TypeScript tools out there, like [Reinforced.Typings](https://github.com/reinforced/Reinforced.Typings) and [NJsonSchema](https://github.com/rsuter/NJsonSchema), but I couldn't find any that would support:
 
-a. Transforming the classes and interfaces to *just* TypeScript interfaces.
-b. Add an `export` statement on those TypeScript interfaces.
-c. Export those interfaces **from a declared module**. 
+- a. Transforming the classes and interfaces to *just* TypeScript interfaces.
+- b. Add an `export` statement on those TypeScript interfaces.
+- c. Export those interfaces **from a declared module**. 
 
 Almost every tool I've used would either turn my C# pocos to a class with a ton of extra cruft and methods added, wouldn't export the interfaces, or wouldn't declare a module. 
 
