@@ -12,7 +12,7 @@ There are a bunch of other C# to TypeScript tools out there, like [Reinforced.Ty
 - a. Transforming the classes and interfaces to *just* TypeScript interfaces.
 - b. Add an `export` statement on those TypeScript interfaces.
 - c. Export those interfaces **from a declared module**. 
-- d. Serialze enums to TypeScript's string literal type, e.g. `"EnumValue1" | "EnumValue2"`.
+- d. Serialize enums to TypeScript's string literal type, e.g. `"EnumValue1" | "EnumValue2"`.
 
 Almost every tool I've used would either turn my C# pocos to a class with a ton of extra cruft and methods added, wouldn't export the interfaces, or wouldn't declare a module. 
 
