@@ -9,9 +9,9 @@ using Dogma.Entities;
 
 namespace Dogma
 {
-    public class Generator
+    public static class Generator
     {
-        public IEnumerable<GeneratedFile> GenerateFiles(Assembly assembly)
+        public static IEnumerable<GeneratedFile> GenerateFiles(Assembly assembly)
         {
             // Keep references to all classes that we create. We'll prune duplicates after
             // all classes have been generated and then combine them into single modules.
@@ -79,7 +79,7 @@ namespace Dogma
                 });
         }
 
-        private IEnumerable<(Type Type, string ModuleName, bool NullableProps)> GetTypesWithAttribute(Assembly assembly)
+        private static IEnumerable<(Type Type, string ModuleName, bool NullableProps)> GetTypesWithAttribute(Assembly assembly)
         {
             foreach (TypeInfo info in assembly.DefinedTypes)
             {
@@ -92,7 +92,7 @@ namespace Dogma
             }
         }
 
-        private (string Code, List<Type> DiscoveredClasses) BuildInterfaceCode(Type type, bool nullableProperties)
+        private static (string Code, List<Type> DiscoveredClasses) BuildInterfaceCode(Type type, bool nullableProperties)
         {
             TypeInfo info = type.GetTypeInfo();
             StringBuilder sb = new StringBuilder();
@@ -130,7 +130,7 @@ namespace Dogma
             return (code, discovered);
         }
 
-        private (string TSTypeName, Type DiscoveredClass) GetTSType(Type type)
+        private static (string TSTypeName, Type DiscoveredClass) GetTSType(Type type)
         {
             if (type.IsArray)
             {
@@ -176,7 +176,7 @@ namespace Dogma
             return (type.Name, null);
         }
 
-        private bool IsNumber(Type type)
+        private static bool IsNumber(Type type)
         {
             Type[] numberTypes = { 
                 typeof(sbyte),
@@ -195,14 +195,14 @@ namespace Dogma
             return numberTypes.Contains(type);
         }
 
-        private bool IsEnumerable(Type type)
+        private static bool IsEnumerable(Type type)
         {
             var info = type.GetTypeInfo();
 
             return info.ImplementedInterfaces.Contains(typeof(System.Collections.IEnumerable));
         }
 
-        private bool IsClass(Type type)
+        private static bool IsClass(Type type)
         {
             var info = type.GetTypeInfo();
 
