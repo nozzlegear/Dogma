@@ -5,5 +5,6 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="newtonsoft.json" Version="10.0.2" />
+    <PackageReference Include="System.ValueTuple" Version="4.3.0" />
   </ItemGroup>
 </Project>

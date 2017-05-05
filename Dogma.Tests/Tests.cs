@@ -31,7 +31,7 @@ namespace Dogma.Tests
     }
 
     [ToTypeScriptAttribute("test-module")]
-    public class TestClass
+    public class TestClass : InterfaceBoy
     {
         public string Foo { get; set; }
 
@@ -52,11 +52,26 @@ namespace Dogma.Tests
         public DateTimeOffset DateOffset { get; set; }
     }
 
-    [ToTypeScript("test-module")]
     public class SubClass
     {
         public string SubFoo { get; set; }
 
         public bool SubBar { get; set; }
+
+        public SubClass2 SubSubBoy { get; set; }
+    }
+
+    public class InterfaceBoy 
+    {
+        public string _Id { get; set; }
+
+        public string _Rev { get; set; }
+    }
+
+    public class SubClass2 : InterfaceBoy
+    {
+        public string Hello { get; set; }
+
+        public bool World { get; set; }
     }
 }

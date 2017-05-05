@@ -15,33 +15,53 @@ namespace Dogma
         {
             // Keep references to all classes that we create. We'll prune duplicates after
             // all classes have been generated and then combine them into single modules.
-            List<GeneratedInterface> classes = new List<GeneratedInterface>();
-            string nl = Environment.NewLine;
-            string tab = "\t";
+            List<GeneratedInterface> interfaces = new List<GeneratedInterface>();
             var assemblyTypes = GetTypesWithAttribute(assembly);
-            var discoveredClasses = assemblyTypes.Select(a => DiscoverClassesFromProps(a.TypeInfo));
+            bool firstRun = true;
             
-            // TODO: Use recursion to iterate over all discovered classes, checking the property
-            // types for other classes to add to the discovered list.
+            // While DiscoveredClasses has classes that aren't in the finishedClasses list,
+            // keep looping through and build interfaces. 
+            List<(Type Type, string ModuleName)> discovered = new List<(Type Type, string ModuleName)>();
 
-            foreach (var data in GetTypesWithAttribute(assembly))
-            {   
-                StringBuilder sb = new StringBuilder();
-                
-                sb.AppendLine(tab + $"export interface {data.TypeInfo.Name} {{");
-
-                foreach (var prop in data.TypeInfo.DeclaredProperties)
+            while (true)
+            {
+                if (firstRun)
                 {
-                    sb.AppendLine(tab + tab + $"{prop.Name}?: {GetTSType(prop.PropertyType)};");
-                }
-                
-                sb.AppendLine(tab + "}");
+                    foreach (var data in assemblyTypes)
+                    {
+                        var generated = GenerateInterface(data.Type, data.ModuleName);
 
-                string code = sb.ToString();
-                classes.Add(new GeneratedInterface(data.Attribute.ModuleName, code));
+                        discovered.AddRange(generated.DiscoveredClasses.Select(disc => (disc, data.ModuleName)));
+                        interfaces.Add(generated.Interface);
+                    }
+
+                    firstRun = false;
+                }
+                else
+                {
+                    // Get unique types that haven't already been generated.
+                    var unique = discovered
+                        .GroupBy(t => t.Type.FullName)
+                        .Select(t => t.First())
+                        .Where(t => ! interfaces.Any(generated => generated.FromObject == t.Type));
+                    discovered = new List<(Type type, string ModuleName)>();
+
+                    foreach (var discovery in unique)
+                    {
+                        var generated = GenerateInterface(discovery.Type, discovery.ModuleName);
+
+                        discovered.AddRange(generated.DiscoveredClasses.Select(t => (t, discovery.ModuleName)));
+                        interfaces.Add(generated.Interface);
+                    }
+                }
+
+                if (discovered == null || discovered.Count() == 0)
+                {
+                    break;
+                }
             }
 
-            return classes.GroupBy(c => c.ModuleName)
+            return interfaces.GroupBy(c => c.ModuleName)
                 .Select(module => 
                 {
                     string moduleName = module.First().ModuleName;
@@ -59,7 +79,36 @@ namespace Dogma
                 });
         }
 
-        private IEnumerable<TypeData> GetTypesWithAttribute(Assembly assembly)
+        private (GeneratedInterface Interface, List<Type> DiscoveredClasses) GenerateInterface(Type type, string moduleName)
+        {
+            TypeInfo info = type.GetTypeInfo();
+            StringBuilder sb = new StringBuilder();
+            List<Type> discovered = new List<Type>();
+            string nl = Environment.NewLine;
+            string tab = "\t";
+            
+            sb.AppendLine(tab + $"export interface {info.Name} {{");
+
+            foreach (var prop in info.DeclaredProperties)
+            {
+                var tsType = GetTSType(prop.PropertyType);
+
+                sb.AppendLine(tab + tab + $"{prop.Name}?: {tsType.TSTypeName};");
+
+                if (tsType.DiscoveredClass != null)
+                {
+                    discovered.Add(tsType.DiscoveredClass);
+                }
+            }
+            
+            sb.AppendLine(tab + "}");
+
+            string code = sb.ToString();
+
+            return (new GeneratedInterface(moduleName, code, type), discovered);
+        }
+
+        private IEnumerable<(Type Type, string ModuleName)> GetTypesWithAttribute(Assembly assembly)
         {
             foreach (TypeInfo info in assembly.DefinedTypes)
             {
@@ -73,57 +122,55 @@ namespace Dogma
                         Attribute = attribute
                     };
 
-                    yield return data;
+                    yield return (info.AsType(), attribute.ModuleName);
                 }
             }
         }
 
-        private IEnumerable<Type> DiscoverClassesFromProps(TypeInfo info)
-        {
-            string breaker = null;
-            return info.DeclaredProperties
-                .Select(prop => prop.PropertyType.GetTypeInfo())
-                .Where(propInfo => propInfo.IsClass)
-                .Select(propInfo => propInfo.GetElementType());
-        }
-
-        private string GetTSType(Type type)
+        private (string TSTypeName, Type DiscoveredClass) GetTSType(Type type)
         {
             if (type.IsArray)
             {
                 var arrayType = GetTSType(type.GetElementType());
+                string typeName = arrayType.TSTypeName + "[]";
 
-                return arrayType + "[]";
+                return (typeName, arrayType.DiscoveredClass);
             }
 
             if (type == typeof(String))
             {
-                return "string";
+                return ("string", null);
             }
 
             if (type == typeof(Boolean))
             {
-                return "boolean";
+                return ("boolean", null);
             }
 
             if (type == typeof(DateTime) || type == typeof(DateTimeOffset))
             {
-                return "Date";
+                return ("Date", null);
             }
 
             if (IsNumber(type))
             {
-                return "number";
+                return ("number", null);
             }
 
             if (IsEnumerable(type) && type.IsConstructedGenericType)
             {
                 var genericType = GetTSType(type.GenericTypeArguments.First());
+                string typeName = genericType.TSTypeName + "[]";
 
-                return genericType + "[]";
+                return (typeName, genericType.DiscoveredClass);
             }
 
-            return type.Name;
+            if (IsClass(type))
+            {
+                return (type.Name, type);
+            }
+
+            return (type.Name, null);
         }
 
         private bool IsNumber(Type type)
