@@ -1,4 +1,8 @@
 # Dogma
+
+[![NuGet](https://img.shields.io/nuget/v/Dogma.svg?maxAge=3600)](https://www.nuget.org/packages/Dogma/)
+[![license](https://img.shields.io/github/license/nozzlegear/dogma.svg?maxAge=3600)](https://raw.githubusercontent.com/nozzlegear/dogma/master/LICENSE)
+
 Dogma is a simple C# => TypeScript module interface declaration generator. Synchronize your dogmas!
 
 ## Why?
