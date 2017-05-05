@@ -81,4 +81,4 @@ Make sure you replace the `Dogma.Tests` string with the name of your assembly. I
 - [ ] Allow overriding a property type with a custom attribute that can specify a module to import the type from.
 - [x] Handle enums.
 - [ ] If a discovered type has it's own module attribute, move it out of the current module and import it instead.
-- [ ] Use `[JsonProperty]` attribute to determine the name of a property.
+- [x] Use `[JsonProperty]` attribute to determine the name of a property.

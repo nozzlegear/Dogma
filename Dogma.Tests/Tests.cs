@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyModel;
 using System.Linq;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using Newtonsoft.Json;
 
 namespace Dogma.Tests
 {
@@ -51,6 +52,9 @@ namespace Dogma.Tests
         public DateTimeOffset DateOffset { get; set; }
 
         public MyEnumBoy Enum { get; set; }
+
+        [JsonProperty("not_weird_name")]
+        public string WeirdName { get; set; }
     }
 
     public class SubClass

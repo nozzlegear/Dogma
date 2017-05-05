@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 using Dogma.Attributes;
 using Dogma.Entities;
+using Newtonsoft.Json;
 
 namespace Dogma
 {
@@ -120,9 +120,10 @@ namespace Dogma
             foreach (var prop in info.DeclaredProperties)
             {
                 var tsType = GetTSType(prop.PropertyType);
+                string propName = GetName(prop);
                 string nullable = nullableProperties ? "?" : string.Empty;
 
-                sb.AppendLine(tab + tab + $"{prop.Name}{nullable}: {tsType.TSTypeName};");
+                sb.AppendLine(tab + tab + $"{propName}{nullable}: {tsType.TSTypeName};");
 
                 if (tsType.DiscoveredClass != null)
                 {
@@ -135,6 +136,16 @@ namespace Dogma
             string code = sb.ToString();
 
             return (code, discovered);
+        }
+
+        /// <summary>
+        /// Attempts to get the JsonProperty name from the type. If the property doesn't have a JsonProperty name, this method will instead return the default name.
+        /// </summary>
+        private static string GetName(PropertyInfo prop)
+        {
+            var jsonProperty = prop.GetCustomAttribute(typeof(JsonPropertyAttribute)) as JsonPropertyAttribute;
+
+            return jsonProperty?.PropertyName ?? prop.Name;
         }
 
         private static (string TSTypeName, Type DiscoveredClass) GetTSType(Type type)
