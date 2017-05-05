@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard1.4</TargetFramework>
     <RootNamespace>Dogma</RootNamespace>
-    <Version>0.2.0</Version>
+    <Version>0.2.1</Version>
   </PropertyGroup>
   <PropertyGroup>
     <Description>Dogma is a simple C# => TypeScript module interface declaration generator. Synchronize your dogmas!</Description>

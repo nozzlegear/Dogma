@@ -49,6 +49,8 @@ namespace Dogma.Tests
         public DateTime Date { get; set; }
 
         public DateTimeOffset DateOffset { get; set; }
+
+        public MyEnumBoy Enum { get; set; }
     }
 
     public class SubClass
@@ -72,5 +74,12 @@ namespace Dogma.Tests
         public string Hello { get; set; }
 
         public bool World { get; set; }
+    }
+
+    public enum MyEnumBoy
+    {
+        EnumValue1 = 1,
+        EnumValue2 = 2,
+        EnumValue3 = 3,
     }
 }

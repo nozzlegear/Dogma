@@ -95,10 +95,17 @@ namespace Dogma
         private static (string Code, List<Type> DiscoveredClasses) BuildInterfaceCode(Type type, bool nullableProperties)
         {
             TypeInfo info = type.GetTypeInfo();
-            StringBuilder sb = new StringBuilder();
             List<Type> discovered = new List<Type>();
             string nl = Environment.NewLine;
             string tab = "\t";
+
+            if (info.IsEnum)
+            {
+                string enumCode = string.Join(" | ", Enum.GetNames(type).Select(name => $"\"{name}\""));
+                return (tab + $"export type {info.Name} = ({enumCode});" + nl, discovered);
+            }
+
+            StringBuilder sb = new StringBuilder();
             string extends = string.Empty;
 
             if (info.BaseType != null && info.BaseType != typeof(System.Object))
@@ -160,6 +167,11 @@ namespace Dogma
                 return ("number", null);
             }
 
+            if (IsEnum(type))
+            {
+                return (type.Name, type);
+            }
+
             if (IsEnumerable(type) && type.IsConstructedGenericType)
             {
                 var genericType = GetTSType(type.GenericTypeArguments.First());
@@ -207,6 +219,13 @@ namespace Dogma
             var info = type.GetTypeInfo();
 
             return info.IsClass;
+        }
+
+        private static bool IsEnum(Type type)
+        {
+            var info = type.GetTypeInfo();
+
+            return info.IsEnum;
         }
     }
 }
