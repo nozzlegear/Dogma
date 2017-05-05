@@ -20,7 +20,6 @@ Almost every tool I've used would either turn my C# pocos to a class with a ton 
 
 Dogma will search whatever Assembly you give it for any classes that are decorated with the `[ToTypeScript]` attribute. It will then iterate through all discovered classes, any subclasses, and any base classes or objects, turning them into TypeScript interfaces.
 
-
 ```cs
 [ToTypeScript("my-module")]
 public class Foo : Bar
@@ -88,3 +87,4 @@ Make sure you replace the `Dogma.Tests` string with the name of your assembly. I
 - [ ] If a discovered type has it's own module attribute, move it out of the current module and import it instead.
 - [x] Use `[JsonProperty]` attribute to determine the name of a property.
 - [ ] Mark a property with a `PartialAttribute`, which converts the type to `Partial<TypeName>`.
+- [ ] Add a complementary standalone binary or dotnet tool to run this from the command line. 
