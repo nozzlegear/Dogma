@@ -18,6 +18,11 @@ namespace Dogma
             List<GeneratedInterface> classes = new List<GeneratedInterface>();
             string nl = Environment.NewLine;
             string tab = "\t";
+            var assemblyTypes = GetTypesWithAttribute(assembly);
+            var discoveredClasses = assemblyTypes.Select(a => DiscoverClassesFromProps(a.TypeInfo));
+            
+            // TODO: Use recursion to iterate over all discovered classes, checking the property
+            // types for other classes to add to the discovered list.
 
             foreach (var data in GetTypesWithAttribute(assembly))
             {   
@@ -73,12 +78,23 @@ namespace Dogma
             }
         }
 
+        private IEnumerable<Type> DiscoverClassesFromProps(TypeInfo info)
+        {
+            string breaker = null;
+            return info.DeclaredProperties
+                .Select(prop => prop.PropertyType.GetTypeInfo())
+                .Where(propInfo => propInfo.IsClass)
+                .Select(propInfo => propInfo.GetElementType());
+        }
+
         private string GetTSType(Type type)
         {
-            if (type.IsConstructedGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+            if (type.IsArray)
             {
-                return "string[]";
-            } 
+                var arrayType = GetTSType(type.GetElementType());
+
+                return arrayType + "[]";
+            }
 
             if (type == typeof(String))
             {
@@ -90,12 +106,57 @@ namespace Dogma
                 return "boolean";
             }
 
-            if (type == typeof(int) || type == typeof(decimal) || type == typeof(double) || type == typeof(float))
+            if (type == typeof(DateTime) || type == typeof(DateTimeOffset))
+            {
+                return "Date";
+            }
+
+            if (IsNumber(type))
             {
                 return "number";
             }
 
+            if (IsEnumerable(type) && type.IsConstructedGenericType)
+            {
+                var genericType = GetTSType(type.GenericTypeArguments.First());
+
+                return genericType + "[]";
+            }
+
             return type.Name;
+        }
+
+        private bool IsNumber(Type type)
+        {
+            Type[] numberTypes = { 
+                typeof(sbyte),
+                typeof(byte),
+                typeof(short),
+                typeof(ushort),
+                typeof(int),
+                typeof(uint),
+                typeof(long),
+                typeof(ulong),
+                typeof(float),
+                typeof(double),
+                typeof(decimal)
+            };
+
+            return numberTypes.Contains(type);
+        }
+
+        private bool IsEnumerable(Type type)
+        {
+            var info = type.GetTypeInfo();
+
+            return info.ImplementedInterfaces.Contains(typeof(System.Collections.IEnumerable));
+        }
+
+        private bool IsClass(Type type)
+        {
+            var info = type.GetTypeInfo();
+
+            return info.IsClass;
         }
     }
 }

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyModel;
 using System.Linq;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Dogma.Tests
 {
@@ -37,5 +38,25 @@ namespace Dogma.Tests
         public bool Bar => false;
 
         public IEnumerable<string> Baz { get; set; }
+
+        public int[] Bat { get; set; }
+
+        public Collection<bool> Collection { get; set; }
+
+        public List<int> List { get; set; }
+
+        public SubClass SubBoy { get; set; }
+
+        public DateTime Date { get; set; }
+
+        public DateTimeOffset DateOffset { get; set; }
+    }
+
+    [ToTypeScript("test-module")]
+    public class SubClass
+    {
+        public string SubFoo { get; set; }
+
+        public bool SubBar { get; set; }
     }
 }
