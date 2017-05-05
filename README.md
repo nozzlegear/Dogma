@@ -79,6 +79,14 @@ var assembly = Assembly.Load(assemblyName);
 
 Make sure you replace the `Dogma.Tests` string with the name of your assembly. In most cases that's just the name of your project, but otherwise it will be specified in the `<AssemblyName>myAssemblyName</AssemblyName>` element in your `.csproj` file.
 
+Note that if you're loading an external project assembly and you get a `System.Reflection.ReflectionTypeLoadException` thrown, you'll need to set `Copy Local ` to `yes` for the referenced project in Visual Studio. Alternatively, you can edit the master project's `.csproj` file and mark the project reference as `private`:
+
+```xml
+<ProjectReference Include="..\path\to\project.csproj">
+  <Private>true</Private>
+</ProjectReference>
+```
+
 ## Roadmap
 
 - [ ] Allow overriding a property type with a custom attribute. 
@@ -88,3 +96,4 @@ Make sure you replace the `Dogma.Tests` string with the name of your assembly. I
 - [x] Use `[JsonProperty]` attribute to determine the name of a property.
 - [ ] Mark a property with a `PartialAttribute`, which converts the type to `Partial<TypeName>`.
 - [ ] Add a complementary standalone binary or dotnet tool to run this from the command line. 
+- [ ] Handle `Nullable` properties.
