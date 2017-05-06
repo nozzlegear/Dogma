@@ -110,11 +110,16 @@ namespace Dogma
 
             foreach (var prop in info.DeclaredProperties)
             {
+                if (prop.Name == "NullableIntArray")
+                {
+                    string breaker = "";
+                }
+
                 var tsType = GetTSType(prop.PropertyType);
                 string propName = GetName(prop);
-                string nullable = nullableProperties ? "?" : string.Empty;
+                string nullable = nullableProperties || tsType.IsNullable ? "?" : string.Empty;
 
-                sb.AppendLine(tab + tab + $"{propName}{nullable}: {tsType.TSTypeName};");
+                sb.AppendLine(tab + tab + $"{propName}{nullable}: {tsType.TypeName};");
 
                 if (tsType.DiscoveredClass != null)
                 {
@@ -142,58 +147,85 @@ namespace Dogma
         /// <summary>
         /// Translates a type to a TypeScript type, while also discovering underlying classes or interfaces.
         /// </summary>
-        private static (string TSTypeName, Type DiscoveredClass) GetTSType(Type type)
+        private static TSType GetTSType(Type type, bool parentIsEnumerable = false)
         {
+            var output = new TSType()
+            {
+                TypeName = type.Name   
+            };
+
             if (type.IsArray)
             {
                 var arrayType = GetTSType(type.GetElementType());
-                string typeName = arrayType.TSTypeName + "[]";
+                arrayType.TypeName += "[]";
 
-                return (typeName, arrayType.DiscoveredClass);
+                return arrayType;
             }
 
             if (type == typeof(String))
             {
-                return ("string", null);
+                output.TypeName = "string";
+
+                return output;
             }
 
             if (type == typeof(Boolean))
             {
-                return ("boolean", null);
+                output.TypeName = "boolean";
+
+                return output;
             }
 
             if (type == typeof(DateTime) || type == typeof(DateTimeOffset))
             {
-                return ("Date", null);
+                output.TypeName = "Date";
+
+                return output;
             }
 
             if (IsNumber(type))
             {
-                return ("number", null);
+                output.TypeName = "number";
+
+                return output;
             }
 
             var info = type.GetTypeInfo();
 
             if (info.IsEnum)
             {
-                return (type.Name, type);
+                output.TypeName = type.Name;
+                output.DiscoveredClass = type;
+
+                return output;
             }
 
-            if (type.IsConstructedGenericType && info.ImplementedInterfaces.Contains(typeof(System.Collections.IEnumerable)))
+            if (info.IsGenericType && info.ImplementedInterfaces.Any(i => i == typeof(System.Collections.IEnumerable)))
+            {
+                var genericType = GetTSType(type.GenericTypeArguments.First(), true);
+                genericType.TypeName += "[]";
+
+                return genericType;
+            }
+
+            if (info.IsGenericType && info.GetGenericTypeDefinition() == typeof(Nullable<>))
             {
                 var genericType = GetTSType(type.GenericTypeArguments.First());
-                string typeName = genericType.TSTypeName + "[]";
+                genericType.IsNullable = !parentIsEnumerable;
 
-                return (typeName, genericType.DiscoveredClass);
+                return genericType;
             }
 
             if (info.IsClass)
             {
-                return (type.Name, type);
+                output.TypeName = type.Name;
+                output.DiscoveredClass = type;
+
+                return output;
             }
 
             // Unknown type. This will probably break the definition, but we'll cross our fingers and return it anyway.
-            return (type.Name, null);
+            return output;
         }
 
         private static bool IsNumber(Type type)

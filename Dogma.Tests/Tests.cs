@@ -30,7 +30,7 @@ namespace Dogma.Tests
         }
     }
 
-    [ToTypeScript("test-module", true)]
+    [ToTypeScript("test-module", false)]
     public class TestClass : InterfaceBoy
     {
         public string Foo { get; set; }
@@ -55,6 +55,10 @@ namespace Dogma.Tests
 
         [JsonProperty("not_weird_name")]
         public string WeirdName { get; set; }
+
+        public int? NullableInt { get; set; }
+
+        public IEnumerable<int?> NullableIntArray { get; set; }
     }
 
     public class SubClass

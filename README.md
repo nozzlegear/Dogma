@@ -96,4 +96,5 @@ Note that if you're loading an external project assembly and you get a `System.R
 - [x] Use `[JsonProperty]` attribute to determine the name of a property.
 - [ ] Mark a property with a `PartialAttribute`, which converts the type to `Partial<TypeName>`.
 - [ ] Add a complementary standalone binary or dotnet tool to run this from the command line. 
-- [ ] Handle `Nullable` properties.
+- [x] Handle `Nullable` properties.
+- [ ] Handle generic classes and interfaces.
